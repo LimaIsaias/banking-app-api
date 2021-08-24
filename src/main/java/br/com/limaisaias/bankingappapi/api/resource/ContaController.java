@@ -2,9 +2,7 @@ package br.com.limaisaias.bankingappapi.api.resource;
 
 
 import br.com.limaisaias.bankingappapi.api.dto.ContaDTO;
-import br.com.limaisaias.bankingappapi.api.dto.TransacaoDTO;
 import br.com.limaisaias.bankingappapi.api.model.Conta;
-import br.com.limaisaias.bankingappapi.api.model.Transacao;
 import br.com.limaisaias.bankingappapi.api.service.ContaService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -13,6 +11,7 @@ import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -22,7 +21,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -31,11 +29,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class ContaController {
-
+    @Autowired
     private final ContaService contaService;
     //    private TransacaoService transacaoService;
-    private final ModelMapper modelMapper;
 
+    @Autowired
+    private ModelMapper modelMapper;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -72,20 +71,7 @@ public class ContaController {
     @ApiOperation("Updates a conta")
     public ContaDTO update(@PathVariable Long id, @RequestBody @Valid ContaDTO dto) {
         log.info(" Updating a conta by id: {} ", id);
-        return contaService.getById(id).map(conta -> {
-
-            conta.setConta(dto.getConta());
-            conta.setAgencia(dto.getAgencia());
-            conta.setDigito(dto.getDigito());
-            conta.setSaldo(dto.getSaldo());
-            if (Objects.nonNull(dto.getTransacoes()))
-                for (TransacaoDTO transacaoDTO : dto.getTransacoes()) {
-                    conta.getTransacoes().add(modelMapper.map(transacaoDTO, Transacao.class));
-                }
-            conta = contaService.update(conta);
-            return modelMapper.map(conta, ContaDTO.class);
-
-        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return contaService.update(id, dto).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     @GetMapping

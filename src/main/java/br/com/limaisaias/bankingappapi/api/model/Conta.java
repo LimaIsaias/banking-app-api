@@ -33,7 +33,7 @@ public class Conta {
     @Column
     private Double saldo;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "conta")
+    @Transient
     private List<Transacao> transacoes;
 
 }

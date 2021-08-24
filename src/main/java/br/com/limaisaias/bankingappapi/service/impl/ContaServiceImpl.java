@@ -1,24 +1,30 @@
-package br.com.limaisaias.bankingappapi.api.service.impl;
+package br.com.limaisaias.bankingappapi.service.impl;
 
+import br.com.limaisaias.bankingappapi.api.dto.ContaDTO;
+import br.com.limaisaias.bankingappapi.api.dto.TransacaoDTO;
 import br.com.limaisaias.bankingappapi.api.model.Conta;
-import br.com.limaisaias.bankingappapi.api.repository.ContaRepository;
+import br.com.limaisaias.bankingappapi.api.model.Transacao;
 import br.com.limaisaias.bankingappapi.api.service.ContaService;
+import br.com.limaisaias.bankingappapi.repository.ContaRepository;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
 public class ContaServiceImpl implements ContaService {
 
-    public ContaServiceImpl(ContaRepository repository) {
-        this.repository = repository;
-    }
-
+    @Autowired
     private ContaRepository repository;
+
+    @Autowired
+    private ModelMapper modelMapper;
 
     @Override
     public Conta save(Conta conta) {
@@ -36,7 +42,7 @@ public class ContaServiceImpl implements ContaService {
         this.repository.delete(conta);
     }
 
-    @Override
+
     public Conta update(Conta conta) {
         validateConta(conta);
         return repository.save(conta);
@@ -58,5 +64,21 @@ public class ContaServiceImpl implements ContaService {
                         .withStringMatcher(ExampleMatcher.StringMatcher.EXACT)
         );
         return repository.findAll(example, pageRequest);
+    }
+
+    @Override
+    public Optional<ContaDTO> update(Long id, ContaDTO dto) {
+        return getById(id).map(conta -> {
+            conta.setConta(dto.getConta());
+            conta.setAgencia(dto.getAgencia());
+            conta.setDigito(dto.getDigito());
+            conta.setSaldo(dto.getSaldo());
+            if (Objects.nonNull(dto.getTransacoes()))
+                for (TransacaoDTO transacaoDTO : dto.getTransacoes()) {
+                    conta.getTransacoes().add(modelMapper.map(transacaoDTO, Transacao.class));
+                }
+            conta = update(conta);
+            return modelMapper.map(conta, ContaDTO.class);
+        });
     }
 }
